@@ -45,119 +45,35 @@ A full, hover-to-play tour lives on the landing page (`docs/index.html`).
 
 ## Quick Start
 
-Defaults work out of the box: clone, run, then configure models/search/email
-inside **Settings**. Only edit `.env` for deployment-level overrides like
-`APP_BIND`, `APP_PORT`, `AUTH_ENABLED`, `DATABASE_URL`, or a pre-seeded admin password.
+Defaults work out of the box: clone, run, then configure models/search/email inside **Settings**. Only edit `.env` for deployment-level overrides like `APP_BIND`, `APP_PORT`, `AUTH_ENABLED`, `DATABASE_URL`, or a pre-seeded admin password.
 
-On first setup, Odysseus creates an admin account (`admin` unless
-`ODYSSEUS_ADMIN_USER` is set) and prints a temporary password in the terminal.
-For Docker installs, the same line is in `docker compose logs odysseus`.
-Use that for the first login, then change it in **Settings**.
+On first setup, Odysseus creates an admin account (`admin` unless `ODYSSEUS_ADMIN_USER` is set) and prints a temporary password in the terminal. Use that for the first login, then change it in **Settings**.
 
-Contributing? See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and
-pull request guidelines.
+### 1. The Windows Way (Native Installer)
 
-### Docker (recommended)
-```bash
+For a native, non-admin installation, download the latest `Odysseus-windows-setup.exe`.
+
+1. Run the installer.
+2. It will install directly into your `AppData\Roaming\Odysseus-windows` folder.
+3. Launch via the desktop shortcut.
+
+### 2. Native Windows (Python)
+
+**One-command launcher** (creates the venv, installs deps, runs setup, starts the server; safe to re-run):
+
+```powershell
 git clone https://github.com/pewdiepie-archdaemon/odysseus.git
 cd odysseus
-cp .env.example .env       # optional, but recommended for explicit defaults
-docker compose up -d --build
+powershell -ExecutionPolicy Bypass -File .\launch-windows.ps1
 ```
-To include optional extras in the image (PDF viewer, Office extraction; includes AGPL PyMuPDF), build with `docker compose build --build-arg INSTALL_OPTIONAL=true` before `up`.
-
-Open `http://localhost:7000` when the containers are healthy. Docker Compose
-binds the web UI to `127.0.0.1` by default. If the port is taken, set
-`APP_PORT=7001` in `.env` and recreate the container. Set `APP_BIND=0.0.0.0`
-only when you intentionally want LAN/reverse-proxy access.
-
-### Native Linux / macOS
-```bash
+### 3. Native executable (nuitka)
+```powershell
 git clone https://github.com/pewdiepie-archdaemon/odysseus.git
 cd odysseus
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python setup.py
-python -m uvicorn app:app --host 127.0.0.1 --port 7000
+.\build-server.bat
+.\build-desktop.bat
 ```
-Requirements: Python 3.11+. Cookbook also needs `tmux` for background model
-downloads and serves. The app itself is lightweight; local model serving is the
-heavy part and depends on the model, runtime, GPU, and VRAM, so small hosts can
-connect to API or remote model servers instead. Use `--host 0.0.0.0` only when you intentionally want LAN/reverse-proxy access.
-
-### Apple Silicon
-Docker on macOS cannot use the Metal GPU. For GPU-accelerated Cookbook on an
-M-series Mac, run Odysseus natively:
-
-```bash
-git clone https://github.com/pewdiepie-archdaemon/odysseus.git
-cd odysseus
-./start-macos.sh
-```
-
-It launches at `http://127.0.0.1:7860`. To expose it to your phone over a trusted LAN/VPN such as Tailscale, bind all interfaces:
-
-```bash
-ODYSSEUS_HOST=0.0.0.0 ./start-macos.sh
-# then open http://<tailscale-ip>:7860
-```
-
-The script also reads `.env` at startup, so `APP_BIND=0.0.0.0` and `APP_PORT`
-set there are picked up automatically without a command-line override each run.
-
-Keep `AUTH_ENABLED=true` (the default) before binding outside loopback. Do not
-expose this port directly to the public internet. To build a clickable app wrapper:
-
-```bash
-./build-macos-app.sh
-```
-
-<details>
-<summary>Cookbook, GPU, Ollama, and troubleshooting notes</summary>
-
-**Docker bundled services.** Compose starts Odysseus, ChromaDB, SearXNG, and
-ntfy. Odysseus and the bundled service ports bind to `127.0.0.1` by default, so
-they are reachable from the host but not exposed to your LAN/public internet
-unless you opt in.
-
-**Cookbook storage in Docker.** Downloads live in `./data/huggingface`
-(`~/.cache/huggingface` in the container). Cookbook-installed Python CLIs and
-serve engines live in `./data/local` (`~/.local` in the container), so they
-survive container recreation.
-
-**Remote servers.** In **Cookbook -> Settings -> Servers**, generate the
-Odysseus SSH key and add the public key to the remote server's
-`~/.ssh/authorized_keys`. From the host you can also run:
-
-```bash
-ssh-copy-id -i data/ssh/id_ed25519.pub user@server
-```
-
-**Docker GPU overlays.** CPU-only users can skip this section. Cookbook can
-only detect GPUs that Docker exposes to the container — if the host runtime or
-device passthrough is not configured, Cookbook sees the iGPU, another card, or
-CPU instead of your intended GPU.
-
-For NVIDIA, `scripts/check-docker-gpu.sh` diagnoses GPU passthrough and can
-optionally install the host runtime or update `.env`.
-
-```bash
-# Read-only diagnostic (default — installs nothing, never edits .env):
-scripts/check-docker-gpu.sh
-
-# Print OS-specific install commands without running them:
-scripts/check-docker-gpu.sh --print-install-commands
-
-# Install NVIDIA Container Toolkit on Ubuntu/Debian (requires sudo):
-scripts/check-docker-gpu.sh --install-nvidia-toolkit
-
-# Write COMPOSE_FILE to .env (only when GPU passthrough is confirmed working):
-scripts/check-docker-gpu.sh --enable-nvidia-overlay
-
-# Full assisted setup — install toolkit, then enable overlay if passthrough works:
-scripts/check-docker-gpu.sh --install-nvidia-toolkit --enable-nvidia-overlay
-```
+PS: This way takes at least few hours to complete and you can also double click on .bat files but make sure you compile server.bat first.
 
 Safety notes:
 - The app never installs host GPU runtime automatically.
@@ -223,78 +139,6 @@ docker compose exec odysseus sh -lc 'test -e /dev/kfd && test -d /dev/dri && ls 
 > the container confirms device passthrough, not ROCm userspace or a
 > ROCm-enabled vLLM/llama.cpp build. `rocm-smi` and `rocminfo` are not expected
 > inside the slim Odysseus image.
-
-**Ollama with Docker.** If Ollama runs on the host, add this endpoint in
-Settings:
-
-```text
-http://host.docker.internal:11434/v1
-```
-
-Ollama must listen outside its own loopback interface:
-
-```bash
-OLLAMA_HOST=0.0.0.0:11434 ollama serve
-```
-
-This connects Odysseus in Docker to an Ollama server that is already running on
-your host machine; it does not start Ollama inside the container.
-`host.docker.internal` is Docker's hostname for the host machine from inside the
-container. Cookbook **Serve** is a separate workflow for serving downloaded
-models through Odysseus/llama.cpp, so Windows users with an existing Ollama
-install usually only need to add the endpoint in Settings.
-
-**Useful checks.**
-
-```bash
-docker compose ps
-docker compose logs --tail=120 odysseus
-docker compose logs odysseus | grep -E 'ChromaDB|MemoryVectorStore|DEGRADED'
-```
-
-**macOS details.** `start-macos.sh` installs Homebrew deps, creates the venv,
-runs setup, and starts uvicorn on port `7860` because AirPlay often holds
-`7000`. It uses llama.cpp/Ollama for Metal. vLLM/SGLang are CUDA/ROCm-only and
-do not run on macOS. MLX-only models are not served by Odysseus.
-
-</details>
-
-### Native Windows
-
-**One-command launcher** (creates the venv, installs deps, runs setup, starts the
-server; safe to re-run):
-
-```powershell
-git clone https://github.com/pewdiepie-archdaemon/odysseus.git
-cd odysseus
-powershell -ExecutionPolicy Bypass -File .\launch-windows.ps1
-```
-
-Or do it by hand:
-
-```powershell
-git clone https://github.com/pewdiepie-archdaemon/odysseus.git
-cd odysseus
-py -3.11 -m venv venv
-venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python setup.py
-python -m uvicorn app:app --host 127.0.0.1 --port 7000
-```
-
-If `python` points at an older interpreter, use `py -3.12` (or another installed
-3.11+ version) for the venv step.
-
-**Requirements:** Python 3.11+. The core app (chat, agent, memory, documents,
-email, calendar, deep research) runs fully native. For full **Cookbook** background
-model downloads and the agent shell tool, also install
-[Git for Windows](https://git-scm.com/download/win) (provides `bash.exe`).
-Local GPU *serving* of vLLM/SGLang needs Linux/WSL2; for a local model on Windows,
-[Ollama](https://ollama.com/download) is the easiest path — point Odysseus at
-`http://localhost:11434/v1` in Settings.
-
-Open `http://localhost:7000`, log in with the generated admin password,
-and configure everything else inside **Settings**.
 
 ## Troubleshooting & Advanced Setup
 
@@ -422,15 +266,6 @@ docs/      landing page (index.html) + preview clips
 All user data lives in `data/` (gitignored): `app.db` (sessions, messages, documents),
 `memory.json`, `presets.json`, `uploads/`, `personal_docs/`, `chroma/`, `settings.json`.
 
-## Star History
-
-<a href="https://www.star-history.com/?repos=pewdiepie-archdaemon%2Fodysseus&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=pewdiepie-archdaemon/odysseus&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=pewdiepie-archdaemon/odysseus&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=pewdiepie-archdaemon/odysseus&type=date&legend=top-left" />
- </picture>
-</a>
 
 ## License
 MIT -- see [LICENSE](LICENSE) and [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md).
