@@ -140,17 +140,6 @@ docker compose exec odysseus sh -lc 'test -e /dev/kfd && test -d /dev/dri && ls 
 > ROCm-enabled vLLM/llama.cpp build. `rocm-smi` and `rocminfo` are not expected
 > inside the slim Odysseus image.
 
-## Troubleshooting & Advanced Setup
-
-### `chromadb-client` conflicts with embedded ChromaDB
-If `chromadb-client` (the lightweight HTTP-only package) is installed alongside the full `chromadb` package, Odysseus starts but ChromaDB silently falls back to HTTP-only mode and fails.
-
-**Fix:** uninstall `chromadb-client` and force-reinstall the full package:
-```bash
-./venv/bin/pip uninstall chromadb-client -y
-./venv/bin/pip install --force-reinstall chromadb
-```
-
 ### HTTPS + LAN/Tailscale exposure
 To expose Odysseus on a local network or Tailscale with HTTPS:
 1. Change the bind address to `0.0.0.0` in `.env` (`APP_BIND=0.0.0.0` or `ODYSSEUS_HOST=0.0.0.0`).
