@@ -38,10 +38,8 @@ def _cache_dir() -> str:
     env = os.environ.get("FASTEMBED_CACHE_PATH")
     if env:
         return env
-    return os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "data", "fastembed_cache",
-    )
+    from src.constants import BASE_DIR
+    return os.path.join(BASE_DIR, "data", "fastembed_cache")
 
 
 def _model_cache_name(hf_source: str) -> str:

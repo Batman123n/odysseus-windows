@@ -1,0 +1,42 @@
+{
+  "name": "odysseus-desktop",
+  "version": "1.0.0",
+  "description": "Native desktop wrapper for Odysseus AI workspace",
+  "author": "Odysseus Team",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.odysseus.desktop",
+    "productName": "Odysseus",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "extraFiles": [
+      {
+        "from": "../build/server.dist",
+        "to": "."
+      }
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

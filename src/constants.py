@@ -1,23 +1,36 @@
 # src/constants.py
 """Application-wide constants and configuration values."""
 import os
+import sys
+from pathlib import Path
 
 APP_VERSION = "1.0.0"
 
 # Base paths
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-DATA_DIR = os.path.join(BASE_DIR, "data")
+IS_COMPILED = "__compiled__" in globals()
+
+if IS_COMPILED:
+    EXE_DIR = Path(os.environ.get("NUITKA_ONEFILE_PARENT", os.path.dirname(sys.executable)))
+    BUNDLE_DIR = Path(__file__).resolve().parent.parent
+    
+    BASE_DIR = str(BUNDLE_DIR) + "/"
+    STATIC_DIR = BUNDLE_DIR / "static"
+    DATA_DIR = EXE_DIR / "data"
+else:
+    BUNDLE_DIR = Path(__file__).resolve().parent.parent
+    BASE_DIR = str(BUNDLE_DIR) + "/"
+    STATIC_DIR = BUNDLE_DIR / "static"
+    DATA_DIR = BUNDLE_DIR / "data"
 
 # Data file paths
-SESSIONS_FILE = os.path.join(DATA_DIR, "sessions.json")
-MEMORY_FILE = os.path.join(DATA_DIR, "memory.json")
-MEMORY_DOC = os.path.join(DATA_DIR, "memory_doc.md")
-PERSONAL_DIR = os.path.join(DATA_DIR, "personal_docs")
-RUNBOOK_DIR = os.path.join(PERSONAL_DIR, "runbook")
-UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
-FEATURES_FILE = os.path.join(DATA_DIR, "features.json")
-SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
+SESSIONS_FILE = str(DATA_DIR / "sessions.json")
+MEMORY_FILE = str(DATA_DIR / "memory.json")
+MEMORY_DOC = str(DATA_DIR / "memory_doc.md")
+PERSONAL_DIR = str(DATA_DIR / "personal_docs")
+RUNBOOK_DIR = str(Path(PERSONAL_DIR) / "runbook")
+UPLOAD_DIR = str(DATA_DIR / "uploads")
+FEATURES_FILE = str(DATA_DIR / "features.json")
+SETTINGS_FILE = str(DATA_DIR / "settings.json")
 
 # API Configuration
 MAX_CONTEXT_MESSAGES = 90

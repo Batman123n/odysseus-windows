@@ -462,20 +462,35 @@ class McpManager:
             return False
 
         script_rel, name = _BUILTIN_SERVERS[server_id]
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        script_path = os.path.join(base_dir, script_rel)
+        # In Nuitka, __file__ is in the temp bundle dir.
+        # We need the real project root for the scripts.
+        from src.constants import BASE_DIR, IS_COMPILED
+        script_path = os.path.join(BASE_DIR, script_rel)
 
         # Clean up old connection
         await self.disconnect_server(server_id)
+
+        # In compiled mode, sys.executable is the .exe itself, which cannot run .py scripts.
+        # We need to find a real Python interpreter.
+        python_exe = sys.executable
+        if IS_COMPILED:
+            # Look for venv/Scripts/python.exe relative to the EXE
+            from src.constants import EXE_DIR
+            venv_python = os.path.join(EXE_DIR, "venv", "Scripts", "python.exe")
+            if os.path.exists(venv_python):
+                python_exe = venv_python
+            else:
+                # Fallback to 'python' in PATH
+                python_exe = "python"
 
         try:
             ok = await self.connect_server(
                 server_id=server_id,
                 name=name,
                 transport="stdio",
-                command=sys.executable,
+                command=python_exe,
                 args=[script_path],
-                env={"PYTHONPATH": base_dir},
+                env={"PYTHONPATH": str(BASE_DIR)},
             )
             if ok:
                 logger.info(f"Reconnected builtin MCP server: {name}")
