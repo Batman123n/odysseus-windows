@@ -89,3 +89,9 @@ docs/windows-port/
 compound.config.json
 *.error.log
 _scratch/
+
+# Specifically block your build output and binaries
+*.exe
+*.pyd
+*.dll
+Setup/
